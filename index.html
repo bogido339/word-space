@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Space</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #080b1c;
+      color: white;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background */
+    .space {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 20% 30%, #252052, transparent 45%),
+        radial-gradient(circle at 80% 80%, #102c48, transparent 50%),
+        #080b1c;
+    }
+
+    /* Floating words */
+    .floating-word {
+      position: absolute;
+      color: rgba(255,255,255,0.25);
+      font-size: 22px;
+      font-weight: 500;
+      animation: float 7s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    @keyframes float {
+      0% {
+        transform: translate(-20px, 20px) rotate(-5deg);
+      }
+
+      100% {
+        transform: translate(20px, -30px) rotate(5deg);
+      }
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 30px 7%;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+    }
+
+    .logo span {
+      color: #a694ff;
+    }
+
+    .counter {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 10px 18px;
+      border-radius: 30px;
+      font-size: 13px;
+    }
+
+    /* Main layout */
+    main {
+      min-height: 75vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 550px;
+      padding: 45px;
+      border-radius: 25px;
+      text-align: center;
+      background: rgba(20,23,43,0.85);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(15px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      font-size: clamp(40px, 8vw, 65px);
+      margin: 20px 0;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    .subtitle {
+      color: #a694ff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 3px;
+    }
+
+    p {
+      color: #b9b9d0;
+      line-height: 1.8;
+      margin-bottom: 25px;
+    }
+
+    /* Buttons */
+    button {
+      padding: 14px 25px;
+      margin: 5px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 700;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: translateY(-3px);
+    }
+
+    .primary {
+      background: #a694ff;
+      color: #111124;
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.1);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    /* Game */
+    .current-word {
+      font-size: clamp(40px, 10vw, 70px);
+      font-weight: 800;
+      margin: 25px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .hint-image {
+      width: 250px;
+      max-width: 100%;
+      height: 180px;
+      object-fit: cover;
+      border-radius: 15px;
+      margin: 20px 0;
+    }
+
+    .translation {
+      font-size: 30px;
+      color: #a694ff;
+      font-weight: bold;
+      margin: 20px;
+      direction: rtl;
+    }
+
+    /* Add word form */
+    input {
+      width: 100%;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #a694ff;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 600px) {
+      header {
+        padding: 20px;
+      }
+
+      .card {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Floating Words Background -->
+  <div class="space" id="space"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">WORD <span>SPACE ✦</span></div>
+    <div class="counter" id="wordCount">0 Words</div>
+  </header>
+
+  <main>
+
+    <!-- HOME SCREEN -->
+    <section class="card" id="home">
+
+      <div class="subtitle">
+        EXPLORE • REMEMBER • LEARN
+      </div>
+
+      <h1>Word Space</h1>
+
+      <p>
+        Explore a universe of English words.
+        Test your memory, discover meanings,
+        and expand your vocabulary.
+      </p>
+
+      <button class="primary" onclick="startGame()">
+        START ✦
+      </button>
+
+      <button class="secondary" onclick="showAddWord()">
+        + Add Word
+      </button>
+
+    </section>
+
+    <!-- GAME SCREEN -->
+    <section class="card hidden" id="game">
+
+      <div class="subtitle">YOUR WORD IS</div>
+
+      <div class="current-word" id="currentWord"></div>
+
+      <p>Do you know the Arabic meaning?</p>
+
+      <img
+        id="hintImage"
+        class="hint-image hidden"
+        alt="Word hint"
+      >
+
+      <div
+        class="translation hidden"
+        id="translation"
+      ></div>
+
+      <p id="hintMessage">
+        Try to remember the meaning.
+      </p>
+
+      <button
+        class="primary"
+        id="hintButton"
+        onclick="showHint()"
+      >
+        💡 Hint 1
+      </button>
+
+      <button class="secondary" onclick="nextWord()">
+        Next Word →
+      </button>
+
+      <button class="secondary" onclick="goHome()">
+        Home
+      </button>
+
+    </section>
+
+    <!-- ADD WORD SCREEN -->
+    <section class="card hidden" id="addWordScreen">
+
+      <h2>Add New Word ✦</h2>
+
+      <p>Expand your vocabulary universe.</p>
+
+      <form id="wordForm">
+
+        <input
+          type="text"
+          id="englishInput"
+          placeholder="English word"
+          required
+        >
+
+        <input
+          type="text"
+          id="arabicInput"
+          placeholder="Arabic translation"
+          required
+        >
+
+        <input
+          type="url"
+          id="imageInput"
+          placeholder="Image URL (optional)"
+        >
+
+        <button class="primary" type="submit">
+          Save Word
+        </button>
+
+        <button
+          class="secondary"
+          type="button"
+          onclick="goHome()"
+        >
+          Cancel
+        </button>
+
+      </form>
+
+      <p id="saveMessage"></p>
+
+    </section>
+
+  </main>
+
+  <script>
+
+    // ===================================
+    // 1. DEFAULT WORDS
+    // ===================================
+
+    const defaultWords = [
+      {
+        word: "Apple",
+        translation: "تفاحة",
+        image: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=500"
+      },
+      {
+        word: "Mountain",
+        translation: "جبل",
+        image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500"
+      },
+      {
+        word: "Ocean",
+        translation: "محيط",
+        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=500"
+      },
+      {
+        word: "Flower",
+        translation: "زهرة",
+        image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=500"
+      },
+      {
+        word: "Book",
+        translation: "كتاب",
+        image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=500"
+      }
+    ];
+
+
+    // ===================================
+    // 2. LOAD SAVED WORDS
+    // ===================================
+
+    let savedWords = [];
+
+    try {
+      const stored = JSON.parse(
+        localStorage.getItem("wordSpaceWords") || "[]"
+      );
+
+      if (Array.isArray(stored)) {
+        savedWords = stored;
+      }
+    } catch (error) {
+      console.error("Could not load saved words:", error);
+    }
+
+    let words = [...defaultWords, ...savedWords];
+
+    let currentWord = null;
+    let hintLevel = 0;
+    let previousIndex = -1;
+
+
+    // ===================================
+    // 3. SCREEN NAVIGATION
+    // ===================================
+
+    function showScreen(screenId) {
+
+      document.querySelectorAll("main section")
+        .forEach(section => {
+          section.classList.add("hidden");
+        });
+
+      document.getElementById(screenId)
+        .classList.remove("hidden");
+
+    }
+
+    function goHome() {
+      showScreen("home");
+    }
+
+    function showAddWord() {
+      document.getElementById("saveMessage").textContent = "";
+      showScreen("addWordScreen");
+    }
+
+
+    // ===================================
+    // 4. FLOATING WORDS
+    // ===================================
+
+    function createFloatingWords() {
+
+      const space = document.getElementById("space");
+
+      space.innerHTML = "";
+
+      words.forEach((item, index) => {
+
+        const wordElement = document.createElement("span");
+
+        wordElement.className = "floating-word";
+        wordElement.textContent = item.word;
+
+        const x = Math.random() * 85;
+        const y = Math.random() * 85;
+
+        wordElement.style.left = x + "%";
+        wordElement.style.top = y + "%";
+
+        wordElement.style.animationDuration =
+          (4 + Math.random() * 6) + "s";
+
+        wordElement.style.animationDelay =
+          (-Math.random() * 6) + "s";
+
+        space.appendChild(wordElement);
+
+      });
+
+      document.getElementById("wordCount").textContent =
+        words.length + " Words";
+    }
+
+
+    // ===================================
+    // 5. START GAME
+    // ===================================
+
+    function startGame() {
+      nextWord();
+    }
+
+
+    // ===================================
+    // 6. RANDOM WORD
+    // ===================================
+
+    function nextWord() {
+
+      if (words.length === 0) {
+        alert("Please add some words first.");
+        return;
+      }
+
+      let randomIndex;
+
+      do {
+        randomIndex = Math.floor(
+          Math.random() * words.length
+        );
+      } while (
+        words.length > 1 &&
+        randomIndex === previousIndex
+      );
+
+      previousIndex = randomIndex;
+
+      currentWord = words[randomIndex];
+
+      hintLevel = 0;
+
+      document.getElementById("currentWord").textContent =
+        currentWord.word;
+
+      document.getElementById("hintImage")
+        .classList.add("hidden");
+
+      document.getElementById("hintImage")
+        .removeAttribute("src");
+
+      document.getElementById("translation")
+        .classList.add("hidden");
+
+      document.getElementById("hintMessage").textContent =
+        "Try to remember the meaning.";
+
+      const hintButton = document.getElementById("hintButton");
+
+      hintButton.textContent = "💡 Hint 1";
+      hintButton.classList.remove("hidden");
+
+      showScreen("game");
+
+    }
+
+
+    // ===================================
+    // 7. HINT SYSTEM
+    // ===================================
+
+    function showHint() {
+
+      if (!currentWord) return;
+
+      const image = document.getElementById("hintImage");
+
+      const translation =
+        document.getElementById("translation");
+
+      const message =
+        document.getElementById("hintMessage");
+
+      const hintButton =
+        document.getElementById("hintButton");
+
+
+      // First hint: Image
+      if (hintLevel === 0) {
+
+        if (currentWord.image) {
+
+          image.src = currentWord.image;
+          image.classList.remove("hidden");
+
+          image.onerror = function() {
+            image.classList.add("hidden");
+            message.textContent = "Image unavailable. Try the next hint.";
+          };
+
+          message.textContent =
+            "Look at the image. Can you guess now?";
+
+        } else {
+
+          message.textContent =
+            "No image available. Try the next hint.";
+
+        }
+
+        hintButton.textContent = "🌐 Hint 2";
+
+        hintLevel = 1;
+
+      }
+
+      // Second hint: Arabic translation
+      else if (hintLevel === 1) {
+
+        translation.textContent =
+          currentWord.translation;
+
+        translation.classList.remove("hidden");
+
+        message.textContent =
+          "Great! Ready for another word?";
+
+        hintButton.classList.add("hidden");
+
+        hintLevel = 2;
+
+      }
+
+    }
+
+
+    // ===================================
+    // 8. ADD NEW WORD
+    // ===================================
+
+    document.getElementById("wordForm")
+      .addEventListener("submit", function(event) {
+
+        event.preventDefault();
+
+        const english =
+          document.getElementById("englishInput")
+            .value.trim();
+
+        const arabic =
+          document.getElementById("arabicInput")
+            .value.trim();
+
+        const image =
+          document.getElementById("imageInput")
+            .value.trim();
+
+        if (!english || !arabic) return;
+
+        // Prevent duplicates
+        const exists = words.some(item =>
+          item.word.toLowerCase() === english.toLowerCase()
+        );
+
+        if (exists) {
+          document.getElementById("saveMessage").textContent =
+            "This word already exists!";
+          return;
+        }
+
+        const newWord = {
+          word: english,
+          translation: arabic,
+          image: image
+        };
+
+        savedWords.push(newWord);
+
+        words = [...defaultWords, ...savedWords];
+
+        try {
+          localStorage.setItem(
+            "wordSpaceWords",
+            JSON.stringify(savedWords)
+          );
+        } catch (error) {
+          console.error("Could not save words:", error);
+          document.getElementById("saveMessage").textContent =
+            "Word added, but browser storage is unavailable.";
+          createFloatingWords();
+          return;
+        }
+
+        document.getElementById("wordForm").reset();
+
+        document.getElementById("saveMessage").textContent =
+          "✓ Word added successfully!";
+
+        createFloatingWords();
+
+      });
+
+
+    // ===================================
+    // 9. INITIALIZE
+    // ===================================
+
+    createFloatingWords();
+
+  </script>
+
+</body>
+</html>
